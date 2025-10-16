@@ -1,0 +1,19 @@
+{
+  "name": "lambda-api-function",
+  "version": "1.0.0",
+  "description": "Lambda function with multiple API endpoints",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo 'No tests specified'",
+    "prebuild": "mkdir -p dist",
+    "build": "cp index.js dist/ && echo 'Build completed'",
+    "local": "node local-test.js"
+  },
+  "keywords": ["lambda", "aws", "api", "nodejs"],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {},
+  "devDependencies": {
+    "jest": "^29.5.0"
+  }
+}
