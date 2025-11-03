@@ -2,7 +2,9 @@ name: test1_zip-lambda-dev_app_ee3e68d_env_0e8d7fe Pipeline (Skyu Generated)
 'on':
   push:
     branches:
-      - main
+      - master
+    tags:
+      - v*
     paths-ignore:
       - .github/workflows/**
       - .trivyignore
@@ -10,7 +12,7 @@ name: test1_zip-lambda-dev_app_ee3e68d_env_0e8d7fe Pipeline (Skyu Generated)
       - README.md
   workflow_dispatch: {}
   repository_dispatch:
-    types: pipeline_732cabc7-fd34-4626-aedf-732cdb0e6f5e
+    types: pipeline_6efe7006-1839-48bb-93ee-78ead259b542
 env:
   ENCODED_PIPELINE_SECRET: ${{secrets.NEWMUSATESTLAMBDA_TEST1_ZIPLAMBDADEV_APP_EE3E68D_ENV_0E8D7FE}}
   COMMIT_ID: ${{github.event.client_payload.commitId || github.sha || github.run_id}}
