@@ -540,11 +540,11 @@ jobs:
                 --role ${{ env.roleARN }} \
                 --environment "Variables={BUILT_WITH=SKYU${{ env.LAMBDA_ENVIRONMENT_VARIABLES }}}" \
                 --region ${{ env.region }} \
-                --vpc-config "SubnetIds=subnet-0f34fea17e6974ba7,subnet-061a39b1905c89685,SecurityGroupIds=sg-048449e6175755fcc" # <--- MODIFIED LINE
+                --vpc-config "SubnetIds=subnet-0f34fea17e6974ba7,subnet-061a39b1905c89685,SecurityGroupIds=sg-048449e6175755fcc"
             else
               echo "Creating new Lambda function"
               aws lambda create-function \
-                --function-name ${{ env.LAMMBDA_FUNCTION_NAME }} \
+                --function-name ${{ env.LAMBDA_FUNCTION_NAME }} \
                 --description "${{ env.LAMBDA_FUNCTION_DESCRIPTION }}" \
                 --timeout ${{ env.LAMBDA_FUNCTION_TIMEOUT }} \
                 --memory-size ${{ env.LAMBDA_FUNCTION_MEMORY_SIZE }} \
@@ -555,7 +555,7 @@ jobs:
                 --code S3Bucket=skyu-temp-${{ env.PIPELINE_ENVIRONMENT_LABEL }}-${{ env.PIPELINE_APPLICATION_ID_STRIPPED }},S3Key=$RUN_ID/lambda_function.zip \
                 --region ${{ env.region }} \
                 --environment "Variables={BUILT_WITH=SKYU${{ env.LAMBDA_ENVIRONMENT_VARIABLES }}}" \
-                --vpc-config "SubnetIds=subnet-0f34fea17e6974ba7,subnet-061a39b1905c89685,SecurityGroupIds=sg-048449e6175755fcc" # <--- MODIFIED LINE
+                --vpc-config "SubnetIds=subnet-0f34fea17e6974ba7,subnet-061a39b1905c89685,SecurityGroupIds=sg-048449e6175755fcc"
             fi
 
             echo "Cleaning up temporary S3 folder"
