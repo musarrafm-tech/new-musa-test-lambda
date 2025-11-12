@@ -6,7 +6,7 @@ name: musatest1_pr-basic_app_5ad5eff Pipeline (Skyu Generated)
       - synchronize
   workflow_dispatch: {}
   repository_dispatch:
-    types: pipeline_150e1ca3-7a4c-4f06-81b1-65a61cbcf680
+    types: pipeline_8655c4b4-4832-44e7-bed2-4c9afaa7e198
 env:
   ENCODED_PIPELINE_SECRET: ${{secrets.NEWMUSATESTLAMBDA_MUSATEST1_PRBASIC_APP_5AD5EFF}}
   COMMIT_ID: ${{github.event.client_payload.commitId || github.sha || github.run_id}}
