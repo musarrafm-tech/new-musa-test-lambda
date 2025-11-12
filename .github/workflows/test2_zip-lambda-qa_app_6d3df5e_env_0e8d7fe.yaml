@@ -12,7 +12,7 @@ name: test2_zip-lambda-qa_app_6d3df5e_env_0e8d7fe Pipeline (Skyu Generated)
       - README.md
   workflow_dispatch: {}
   repository_dispatch:
-    types: pipeline_eefc2bee-8585-4289-9723-b470224b76d7
+    types: pipeline_b03b4362-5865-420d-a89e-1e3a7115d5b2
 env:
   ENCODED_PIPELINE_SECRET: ${{secrets.NEWMUSATESTLAMBDA_TEST2_ZIPLAMBDAQA_APP_6D3DF5E_ENV_0E8D7FE}}
   COMMIT_ID: ${{github.event.client_payload.commitId || github.sha || github.run_id}}
