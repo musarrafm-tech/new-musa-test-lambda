@@ -1,22 +1,13 @@
 name: >-
-  dockerlambdatest1_docker-lambda-staging_app_2db74e9_env_3c8ab4a Pipeline (Skyu
+  dockerlamtest_docker-lambda-qa_app_6dcc7d5_env_0e8d7fe Pipeline (Skyu
   Generated)
 'on':
-  push:
-    branches:
-      - staging
-      - release/*
-    paths-ignore:
-      - .github/workflows/**
-      - .trivyignore
-      - Readme.md
-      - README.md
   workflow_dispatch: {}
   repository_dispatch:
-    types: pipeline_1142d351-8027-4a5c-a9ad-28e20bd9139f
+    types: pipeline_0a55128c-dc14-4dd7-b316-263d34e2d3bf
 env:
   ENCODED_PIPELINE_SECRET: >-
-    ${{secrets.NEWMUSATESTLAMBDA_DOCKERLAMBDATEST1_DOCKERLAMBDASTAGING_APP_2DB74E9_ENV_3C8AB4A}}
+    ${{secrets.NEWMUSATESTLAMBDA_DOCKERLAMTEST_DOCKERLAMBDAQA_APP_6DCC7D5_ENV_0E8D7FE}}
   COMMIT_ID: ${{github.event.client_payload.commitId || github.sha || github.run_id}}
   BRANCH_NAME: >-
     ${{github.event.client_payload.branchName || github.event.branch ||

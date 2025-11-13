@@ -1,4 +1,4 @@
-name: dockerlambdatest1_pr-default_app_2db74e9 Pipeline (Skyu Generated)
+name: dockerlamtest_pr-default_app_6dcc7d5 Pipeline (Skyu Generated)
 'on':
   pull_request:
     types:
@@ -6,9 +6,9 @@ name: dockerlambdatest1_pr-default_app_2db74e9 Pipeline (Skyu Generated)
       - synchronize
   workflow_dispatch: {}
   repository_dispatch:
-    types: pipeline_f5f8cd35-5c26-463e-a406-d2a4c27fe5d9
+    types: pipeline_4c566c57-0be0-4e89-89aa-d0e92f7cd7be
 env:
-  ENCODED_PIPELINE_SECRET: ${{secrets.NEWMUSATESTLAMBDA_DOCKERLAMBDATEST1_PRDEFAULT_APP_2DB74E9}}
+  ENCODED_PIPELINE_SECRET: ${{secrets.NEWMUSATESTLAMBDA_DOCKERLAMTEST_PRDEFAULT_APP_6DCC7D5}}
   COMMIT_ID: ${{github.event.client_payload.commitId || github.sha || github.run_id}}
   BRANCH_NAME: >-
     ${{github.event.client_payload.branchName || github.event.branch ||
