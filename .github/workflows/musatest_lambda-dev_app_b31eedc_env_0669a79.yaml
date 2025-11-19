@@ -825,7 +825,7 @@ jobs:
                 echo "${{ env.ENCODED_PIPELINE_SECRET }}" | base64 --decode | jq -r 'to_entries[] | "\(.key)=\(.value)"' | while read line; do echo "$line" >> $GITHUB_ENV; echo "::add-mask::${line#*=}"; done
                 
       - name: Temp Custom Step
-        run: echo "your command here"
+        run: 'echo "your command here new" '
       - name: 'Run :: Deploy and Notify Resource Service'
         env:
           RUN_ID: ${{ github.run_id }}
