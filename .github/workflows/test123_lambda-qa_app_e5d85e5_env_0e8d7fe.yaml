@@ -11,139 +11,6 @@ env:
     github.ref_name}}
   DEPLOY_STEP_SHOULD_DEPLOY: 'false'
 jobs:
-  code-scan:
-    name: Code Scan
-    runs-on: ubuntu-latest
-    permissions: write-all
-    steps:
-      - name: 'Run :: Checkout repository for Code Scan'
-        uses: actions/checkout@v4
-      - name: 'Run :: Checkout Specific Commit'
-        env:
-          COMMIT_ID: ${{ github.event.client_payload.commitId }}
-          BRANCH_NAME: ${{ github.event.client_payload.branchName }}
-        if: >-
-          ${{ github.event.client_payload.commitId != null ||
-          github.event.client_payload.branchName != null }}
-        run: |2-
-
-              echo "Starting the checkout process..."
-              git fetch --all
-              if [ -n "$COMMIT_ID" ]; then
-                echo "Commit ID provided: $COMMIT_ID"
-                git checkout $COMMIT_ID || true
-                echo "Checked out to commit ID: $COMMIT_ID"
-              elif [ -n "$BRANCH_NAME" ]; then
-                echo "Branch name provided: $BRANCH_NAME"
-                git checkout $BRANCH_NAME || true
-                echo "Checked out to branch: $BRANCH_NAME"
-
-                #Updating the commit Id
-                ACTUAL_COMMIT_ID=$(git rev-parse HEAD)
-                echo "Changing CommitId: $ACTUAL_COMMIT_ID"
-                echo "COMMIT_ID=$ACTUAL_COMMIT_ID" >> $GITHUB_ENV
-              else
-                echo "Skipping checkout..."
-              fi
-            
-      - name: 'Run :: Decoding Secrets'
-        run: |2-
-
-                if [ ! -x "$(command -v jq)" ]; then
-                  echo "jq not found, installing..."
-                  sudo apt-get update
-                  sudo apt-get install -y jq
-                fi
-                echo "${{ env.ENCODED_PIPELINE_SECRET }}" | base64 --decode | jq -r 'to_entries[] | "\(.key)=\(.value)"' | while read line; do echo "$line" >> $GITHUB_ENV; echo "::add-mask::${line#*=}"; done
-                
-      - name: 'Run :: Install Semgrep, Scan and Print'
-        run: >-
-          docker run -i -v "${PWD}:/src" semgrep/semgrep semgrep /src --json
-          --quiet > semgrep_results.json
-      - name: 'Run :: Trivy Filesystem Scan'
-        run: |2-
-
-                  docker run --rm -v "${PWD}:/src" aquasec/trivy fs /src --format json --quiet > trivy_results.json
-                  # Minifying Json
-                  jq -c '.' trivy_results.json > trivy_results.min.json
-                  
-      - name: 'Run :: Evaluate Trivy Results'
-        run: |2-
-             
-                  if jq -e '.Results | map(select(.Vulnerabilities)) | length > 0' trivy_results.min.json >/dev/null; then
-                    echo "Vulnerabilities detected!"
-                    jq '.Results[] | select(.Vulnerabilities?) | {Target: .Target, Vulnerabilities: .Vulnerabilities[] | {ID: .VulnerabilityID, Severity: .Severity, Description: .Description}}' trivy_results.min.json
-                    echo "IS_TRIVY_VULNERABILITIES_DETECTED=true" >> $GITHUB_ENV
-                  fi
-                  
-      - name: 'Run :: Trivy Filesystem Scan (Including Trivy Ignores)'
-        run: |2-
-
-                  docker run --rm -v "${PWD}:/src" aquasec/trivy fs /src --format json --quiet --report summary --dependency-tree > trivy_results.json
-                  # Minifying Json
-                  jq -c '.' trivy_results.json > trivy_results.min.json
-                  
-      - name: 'Run :: Upload Code Scan Reports'
-        env:
-          RUN_ID: ${{ github.run_id }}
-        run: |2-
-
-                  echo "Uploading Code Scan Report" 
-                  SARIF_FILE="semgrep_results.json"
-                  if [ -n "$SARIF_FILE" ]; then
-                    cat "$SARIF_FILE" > ${{ env.COMMIT_ID }}-code-scan-report.sarif
-                    echo "Uploading Code Quality Results to S3 :: ${{ env.COMMIT_ID }}-code-scan-report.sarif"
-           
-                    response=$(curl -X POST -F 'file=@${{ env.COMMIT_ID }}-code-scan-report.sarif' -F 'provider=aws' -F 'resourceType=code-scan-report' -F 'cloudStoragePath=/${{ env.PIPELINE_APPLICATION_ID }}/code-scan-reports/' -F 'pipelineRunId=${{ env.RUN_ID }}'  -H 'Authorization: ${{ env.SERVICE_ACC_ACCESS_TOKEN }}' -H 'x-auth-by: sa' -H 'x-organization-id: ${{ env.PIPELINE_ORGANIZATION_ID }}' -H 'x-project-id: ${{ env.PIPELINE_PROJECT_ID }}' -H 'x-environment-id: ${{ env.PIPELINE_ENVIRONMENT_ID }}' -H 'x-trace-id: ${{ env.PIPELINE_TRACE_ID }}' -H 'x-resource-id: ${{ env.PIPELINE_APPLICATION_ID }}' -H 'Content-Type: multipart/form-data'  "${{ env.S3_UPLOAD_ENDPOINT }}")
-
-                    if echo "$response" | grep -q '"success":true'; then
-                      echo "SUCCESS :: $response"
-                    else
-                      echo "FAILED :: $response"
-                    fi
-
-                  else
-                      echo "SARIF file not found."
-                  fi
-
-                  echo "Uploading Code Vulnerability Report" 
-                  SARIF_FILE="trivy_results.min.json"
-                  if [ -n "$SARIF_FILE" ]; then
-                    cat "$SARIF_FILE" > ${{ env.COMMIT_ID }}-code-vulnerability-report.sarif
-                    echo "Uploading Code Vulnerability Results to S3 :: ${{ env.COMMIT_ID }}-code-vulnerability-report.sarif"
-           
-                    response=$(curl -X POST -F 'file=@${{ env.COMMIT_ID }}-code-vulnerability-report.sarif' -F 'provider=aws' -F 'resourceType=code-vulnerability-report' -F 'cloudStoragePath=/${{ env.PIPELINE_APPLICATION_ID }}/code-vulnerability-reports/' -F 'pipelineRunId=${{ env.RUN_ID }}'  -H 'Authorization: ${{ env.SERVICE_ACC_ACCESS_TOKEN }}' -H 'x-auth-by: sa' -H 'x-organization-id: ${{ env.PIPELINE_ORGANIZATION_ID }}' -H 'x-project-id: ${{ env.PIPELINE_PROJECT_ID }}' -H 'x-environment-id: ${{ env.PIPELINE_ENVIRONMENT_ID }}' -H 'x-trace-id: ${{ env.PIPELINE_TRACE_ID }}' -H 'x-resource-id: ${{ env.PIPELINE_APPLICATION_ID }}' -H 'Content-Type: multipart/form-data'  "${{ env.S3_UPLOAD_ENDPOINT }}")
-
-                    if echo "$response" | grep -q '"success":true'; then
-                      echo "SUCCESS :: $response"
-                    else
-                      echo "FAILED :: $response"
-                    fi
-
-                  else
-                      echo "SARIF file not found."
-                  fi
-                  
-                  echo "Uploading Trivy Ignore File" 
-                  if [ -f ".trivyignore" ]; then
-                    response=$(curl -X POST -F 'file=@.trivyignore' -F 'provider=aws' -F 'resourceType=trivy-ignore' -F 'cloudStoragePath=/${{ env.PIPELINE_APPLICATION_ID }}/trivy-ignore-file/${{ env.COMMIT_ID }}/' -F 'pipelineRunId=$RUN_ID'  -H 'Authorization: ${{ env.SERVICE_ACC_ACCESS_TOKEN }}' -H 'x-organization-id: ${{ env.PIPELINE_ORGANIZATION_ID }}' -H 'x-project-id: ${{ env.PIPELINE_PROJECT_ID }}' -H 'x-environment-id: ${{ env.PIPELINE_ENVIRONMENT_ID }}' -H 'x-trace-id: ${{ env.PIPELINE_TRACE_ID }}' -H 'x-resource-id: ${{ env.PIPELINE_APPLICATION_ID }}' -H 'x-auth-by: sa' -H 'Content-Type: multipart/form-data'  "${{ env.S3_UPLOAD_ENDPOINT }}")
-
-                    if echo "$response" | grep -q '"success":true'; then
-                      echo "SUCCESS :: $response"
-                    else
-                      echo "FAILED :: $response"
-                    fi
-
-                  else
-                      echo ".trivyignore file not found"
-                  fi
-                  trivyVulnFound=${{ env.IS_TRIVY_VULNERABILITIES_DETECTED }}
-                  if [ -n "$trivyVulnFound" ] && [ "NONE" != "NONE" ]; then
-                    echo "Trivy vulnerabilities were detected."
-                    echo "The job failed after uploading the code scan reports."
-                    exit 1
-                  fi
-                  
   _status-pending:
     name: _status-pending
     steps:
@@ -398,6 +265,7 @@ jobs:
     permissions: write-all
     if: ${{ github.event.client_payload.releaseData }}
     runs-on: ubuntu-latest
+  undefined: {}
   build-and-push:
     name: build-and-push
     steps:
@@ -806,8 +674,8 @@ jobs:
               response=$(curl -X PUT -d "runId=$RUN_ID&context=$context&appId=${{ github.event.client_payload.externalRepo.appId }}"  -H 'Authorization: ${{ env.SERVICE_ACC_ACCESS_TOKEN }}' -H 'x-organization-id: ${{ env.PIPELINE_ORGANIZATION_ID }}' -H 'x-project-id: ${{ env.PIPELINE_PROJECT_ID }}' -H 'x-environment-id: ${{ env.PIPELINE_ENVIRONMENT_ID }}' -H 'x-trace-id: ${{ env.PIPELINE_TRACE_ID }}' -H 'x-auth-by: sa' -H 'Content-Type: application/x-www-form-urlencoded'  "${{ env.PIPELINE_SERVICE_EP }}/${{ env.PIPELINE_ID }}/SUCCESS?releaseId=${{ github.event.client_payload.releaseData.releaseId }}")
               
     needs:
-      - code-scan
       - _status_testing
+      - code-scans
       - build-and-push
       - deploy-lambda
       - configure-lambda
@@ -898,8 +766,8 @@ jobs:
               fi
               
     needs:
-      - code-scan
       - _status_testing
+      - code-scans
       - build-and-push
       - deploy-lambda
       - configure-lambda
